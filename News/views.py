@@ -12,7 +12,7 @@ def convert_json_to_python(data):
         'title': "Unknown" if data['title'] is None else data['title'],
         'description': "Unknown" if data['description'] is None else data['description'],
         'url': data['url'],
-        'url_to_image': "https://www.pexels.com/photo/selective-focus-photography-of-magazines-518543/" if data['urlToImage'] is None else data['urlToImage'],
+        'url_to_image': "https://images.pexels.com/photos/3856050/pexels-photo-3856050.jpeg" if data['urlToImage'] is None else data['urlToImage'],
         'published_at': "Unknown" if data['publishedAt'] is None else data['publishedAt'],
         'content': "Unknown" if data['content'] is None else data['content']
     }
@@ -34,13 +34,13 @@ def add_news(request):
             serialized_articles.append(serializer.data)
         else:
             for field, errors in serializer.errors.items():
-                if field == 'url':
+                if field == 'url_to_image' or 'content':
                     continue
-                print(f"Validation errors:\nfield -> {field},\nerror -> {errors}\n\n")
+                print(f"Validation errors: Error Reports Processing...\nfield -> {field},\nerror -> {errors}\n\n")
                 print(article)
                 print(converted_data)
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    return Response("serialized_articles", status=status.HTTP_201_CREATED)
+    return Response("Articles added to Database", status=status.HTTP_201_CREATED)
 
 def convert_python_to_json(serializer):
     result_data = []
