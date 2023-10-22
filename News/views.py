@@ -1,6 +1,8 @@
+from django.db import IntegrityError
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status
+
 from .models import NewsArticle
 from .serializers import NewsArticleSerializer
 
@@ -25,21 +27,32 @@ def add_news(request):
     request_data = request.data
     articles = request_data.get('articles')
     serialized_articles = []
+    validation_errors = []
     for article in articles:
         converted_data = convert_json_to_python(article)  
         # print("Data received:", converted_data)
         serializer = NewsArticleSerializer(data=converted_data)
         if serializer.is_valid():
-            serializer.save()
-            serialized_articles.append(serializer.data)
+            try:
+                serializer.save()
+                serialized_articles.append(serializer.data)
+            except IntegrityError as e:
+                # Handle UNIQUE constraint violations for 'url_to_image' or 'content' fields
+                if 'UNIQUE constraint failed: News_newsarticle.url_to_image' in str(e) or 'UNIQUE constraint failed: News_newsarticle.content' in str(e):
+                    continue
+                else:
+                    validation_errors.append(str(e))
         else:
             for field, errors in serializer.errors.items():
-                if field == 'url_to_image' or 'content':
-                    continue
-                print(f"Validation errors: Error Reports Processing...\nfield -> {field},\nerror -> {errors}\n\n")
-                print(article)
-                print(converted_data)
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                if field not in ['url_to_image', 'content', 'url']:
+                    print(f"Validation errors: Error Reports Processing...\nfield -> {field},\nerror -> {errors}\n\n")
+                    print(article)
+                    print(converted_data)
+                    validation_errors.append({field: errors})
+
+    if validation_errors:
+        # Handle any validation errors, other than UNIQUE constraint violations
+        return Response(validation_errors, status=status.HTTP_400_BAD_REQUEST)
     return Response("Articles added to Database", status=status.HTTP_201_CREATED)
 
 def convert_python_to_json(serializer):
