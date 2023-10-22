@@ -12,7 +12,9 @@
     "form-data": "^4.0.0",
     "mime-db": "^1.52.0",
     "mime-types": "^2.1.35",
-    "proxy-from-env": "^1.1.0"
+    "proxy-from-env": "^1.1.0",
+    "react-router-dom": "^6.17.0",
+    "react-top-loading-bar": "^2.3.1"
   },
   "devDependencies": {
     "create-vite": "^4.4.1",

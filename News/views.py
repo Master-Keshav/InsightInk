@@ -1,28 +1,20 @@
-# from django.shortcuts import render
-# from rest_framework import viewsets
-
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status
 from .models import NewsArticle
 from .serializers import NewsArticleSerializer
 
-# class NewsArticleViewSet(viewsets.ModelViewSet):
-#     queryset = NewsArticle.objects.all()
-#     serializer_class = NewsArticleSerializer
-
-# def check_and_convert_to_news_article(data):
 def convert_json_to_python(data):
     news_article_data = {
         'source_id': "Unknown" if data['source']['id'] is None else data['source']['id'],
-        'source_name': data['source']['name'],
-        'author': data['author'],
-        'title': data['title'],
-        'description': data['description'],
+        'source_name': "Unknown" if data['source']['name'] is None else data['source']['name'],
+        'author': "Unknown" if data['author'] is None else data['author'],
+        'title': "Unknown" if data['title'] is None else data['title'],
+        'description': "Unknown" if data['description'] is None else data['description'],
         'url': data['url'],
-        'url_to_image': data['urlToImage'],
-        'published_at': data['publishedAt'],
-        'content': data['content']
+        'url_to_image': "https://www.pexels.com/photo/selective-focus-photography-of-magazines-518543/" if data['urlToImage'] is None else data['urlToImage'],
+        'published_at': "Unknown" if data['publishedAt'] is None else data['publishedAt'],
+        'content': "Unknown" if data['content'] is None else data['content']
     }
     return news_article_data
 
@@ -31,39 +23,24 @@ def convert_json_to_python(data):
 def add_news(request):
     # Process the POST request data and create a new news article
     request_data = request.data
+    articles = request_data.get('articles')
     serialized_articles = []
-    for data in request_data:
-        converted_data = convert_json_to_python(data)  
+    for article in articles:
+        converted_data = convert_json_to_python(article)  
         # print("Data received:", converted_data)
         serializer = NewsArticleSerializer(data=converted_data)
         if serializer.is_valid():
             serializer.save()
             serialized_articles.append(serializer.data)
         else:
-            print("Validation errors:", serializer.errors)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    return Response(serialized_articles, status=status.HTTP_201_CREATED)
-
-
-
-
-
-
-
-    # for data in request_data:
-    #     print(converted_data)
-    #     NewsArticle(**converted_data)
-    #     NewsArticle.save()
-    # return Response("serializer.data", status=status.HTTP_201_CREATED)
-    
-    
-    
-    
-    
-    # if serializer.is_valid():
-    #     serializer.save()
-        # return Response(serializer.data, status=status.HTTP_201_CREATED)
-    # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            for field, errors in serializer.errors.items():
+                if field == 'url':
+                    continue
+                print(f"Validation errors:\nfield -> {field},\nerror -> {errors}\n\n")
+                print(article)
+                print(converted_data)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    return Response("serialized_articles", status=status.HTTP_201_CREATED)
 
 def convert_python_to_json(serializer):
     result_data = []
